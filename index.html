@@ -1,17 +1,509 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#0f0f0f" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="CDE Intel" />
-    <title>CDE Event Intel</title>
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-  </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-  </body>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#0f0f0f"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="CDE Intel"/>
+  <title>CDE Event Intel</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0f0f0f;--bg1:#161616;--bg2:#1e1e1e;--bg3:#262626;--border:#2a2a2a;
+      --amber:#f0a500;--adim:#7a5200;--aglow:rgba(240,165,0,0.12);
+      --green:#3ddc84;--red:#ff5f57;--blue:#4da6ff;
+      --t:#e8e8e8;--t2:#9a9a9a;--t3:#5a5a5a;
+      --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+      --r:6px;--tabh:60px;--hdrh:56px;
+    }
+    html,body,#root{height:100%;background:var(--bg);overflow:hidden}
+    .app{font-family:var(--sans);color:var(--t);background:var(--bg);height:100dvh;max-width:430px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden}
+    .hdr{height:var(--hdrh);background:var(--bg1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0}
+    .logo{width:32px;height:32px;background:var(--amber);border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:600;font-size:13px;color:#000;letter-spacing:-0.5px}
+    .hdrtitle{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--t2);letter-spacing:0.08em;text-transform:uppercase}
+    .hdrtitle span{color:var(--amber)}
+    .badge{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--amber);background:var(--aglow);border:1px solid var(--adim);padding:3px 7px;border-radius:3px}
+    .sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .3s}
+    .sdot.ok{background:var(--green);animation:pulse 2s infinite}
+    .sdot.busy{background:var(--amber);animation:blink 1s infinite}
+    .sdot.err{background:var(--red)}
+    @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(61,220,132,.4)}70%{box-shadow:0 0 0 6px rgba(61,220,132,0)}100%{box-shadow:0 0 0 0 rgba(61,220,132,0)}}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+    .scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:8px}
+    .scroll::-webkit-scrollbar{width:2px}
+    .scroll::-webkit-scrollbar-thumb{background:var(--border)}
+    .tabs{height:var(--tabh);background:var(--bg1);border-top:1px solid var(--border);display:flex;flex-shrink:0}
+    .tb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:none;border:none;cursor:pointer;color:var(--t3);font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;transition:color .15s;position:relative}
+    .tb.on{color:var(--amber)}
+    .tb.on::before{content:'';position:absolute;top:0;left:15%;right:15%;height:2px;background:var(--amber);border-radius:0 0 2px 2px}
+    .tbi{font-size:18px;line-height:1}
+    .sec{padding:12px 14px 0}
+    .slbl{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+    .slbl::after{content:'';flex:1;height:1px;background:var(--border)}
+    .card{background:var(--bg1);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px}
+    .fld{margin-bottom:14px}
+    .fld:last-child{margin-bottom:0}
+    .flbl{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--t2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;display:block}
+    .fsub{font-size:9px;color:var(--t3);font-weight:400;margin-left:6px;letter-spacing:0;text-transform:none}
+    input[type=text],input[type=date],input[type=time],select,textarea{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);color:var(--t);font-family:var(--mono);font-size:13px;padding:9px 11px;outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none}
+    input:focus,select:focus,textarea:focus{border-color:var(--amber);box-shadow:0 0 0 2px var(--aglow)}
+    textarea{resize:vertical;min-height:70px;font-size:12px;line-height:1.5}
+    .ctr{display:flex;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+    .cb{width:44px;height:40px;background:var(--bg3);border:none;color:var(--t2);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--mono);transition:background .1s}
+    .cb:active{background:var(--adim);color:var(--amber)}
+    .cv{flex:1;text-align:center;font-family:var(--mono);font-size:18px;font-weight:600;color:var(--t);line-height:40px}
+    .cu{font-size:10px;color:var(--t3);padding-right:10px;font-family:var(--mono);line-height:40px}
+    .stp{display:flex;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+    .stpb{width:44px;height:40px;background:var(--bg3);border:none;color:var(--t2);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--mono)}
+    .stpb:active{background:var(--adim)}
+    .stpd{flex:1;display:flex;align-items:baseline;justify-content:center;gap:3px;padding:0 8px}
+    .stpv{font-family:var(--mono);font-size:18px;font-weight:600;color:var(--t)}
+    .stpu{font-family:var(--mono);font-size:10px;color:var(--t3)}
+    input[type=range]{-webkit-appearance:none;width:100%;height:4px;border-radius:2px;outline:none;border:none;padding:0}
+    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;background:var(--amber);border-radius:50%;cursor:pointer;box-shadow:0 0 0 3px var(--aglow)}
+    .slv{text-align:center;font-family:var(--mono);font-size:24px;font-weight:600;color:var(--amber);margin-bottom:4px}
+    .sld{text-align:center;font-size:11px;color:var(--t2);margin-bottom:8px}
+    .sll{display:flex;justify-content:space-between;margin-top:6px}
+    .slln{font-family:var(--mono);font-size:9px;color:var(--t3)}
+    .slln.on{color:var(--amber)}
+    .sg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .sg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+    .sb2{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px}
+    .sb2.hi{border-color:var(--adim);background:var(--aglow)}
+    .sl{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:4px}
+    .sv2{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--t);line-height:1.1}
+    .sv2.a{color:var(--amber)}
+    .su2{font-size:10px;font-weight:400;color:var(--t3);margin-left:2px}
+    .tr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .db{background:var(--aglow);border:1px solid var(--adim);border-radius:var(--r);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .dbl{font-family:var(--mono);font-size:9px;color:var(--amber);text-transform:uppercase;letter-spacing:.1em}
+    .dbv{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--amber)}
+    .strow{display:flex;gap:8px;flex-wrap:wrap}
+    .pill{display:flex;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:5px 10px;cursor:pointer;transition:border-color .15s,background .15s}
+    .pill.on{border-color:var(--amber);background:var(--aglow)}
+    .pill span{font-size:12px;color:var(--t2)}
+    .pill.on span{color:var(--amber)}
+    .btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 20px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;transition:all .15s}
+    .btnp{background:var(--amber);color:#000}
+    .btnp:active{background:#c88800}
+    .btnp:disabled{background:var(--bg3);color:var(--t3);cursor:not-allowed}
+    .btng{background:var(--bg2);border:1px solid var(--border);color:var(--t2)}
+    .btng:active{border-color:var(--amber);color:var(--amber)}
+    .btnd{background:transparent;border:1px solid var(--red);color:var(--red)}
+    .btnw{width:100%}
+    .ei{background:var(--bg1);border:1px solid var(--border);border-radius:var(--r);padding:13px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s}
+    .ei:active{border-color:var(--amber)}
+    .eih{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
+    .ein{font-family:var(--sans);font-size:14px;font-weight:600;color:var(--t);flex:1;margin-right:8px}
+    .eis{font-family:var(--mono);font-size:11px;font-weight:600;background:var(--aglow);color:var(--amber);border:1px solid var(--adim);border-radius:3px;padding:2px 7px;white-space:nowrap}
+    .mc{font-family:var(--mono);font-size:10px;color:var(--t3)}
+    .mc strong{color:var(--t2)}
+    .ibw{margin-bottom:12px}
+    .ibh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+    .ibl{font-family:var(--mono);font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.08em}
+    .ibv{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--amber)}
+    .ibt{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
+    .ibf{height:100%;background:var(--amber);border-radius:3px;transition:width .6s ease}
+    .ibf.g{background:var(--green)}
+    .ibf.b{background:var(--blue)}
+    .empty{text-align:center;padding:50px 20px;color:var(--t3)}
+    .eic{font-size:36px;margin-bottom:12px;opacity:.5}
+    .etx{font-family:var(--mono);font-size:11px;letter-spacing:.05em;line-height:1.8}
+    .lscr{display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;gap:12px}
+    .spin{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--amber);border-radius:50%;animation:sp .8s linear infinite}
+    @keyframes sp{to{transform:rotate(360deg)}}
+    .ltx{font-family:var(--mono);font-size:10px;color:var(--t3);letter-spacing:.08em}
+    .toast{position:fixed;bottom:calc(var(--tabh) + 12px);left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:11px;font-weight:600;padding:9px 18px;border-radius:20px;z-index:100;white-space:nowrap;animation:tin .2s ease,tout .3s ease 1.7s forwards;pointer-events:none;max-width:90vw}
+    .toast.s{background:var(--green);color:#000}
+    .toast.e{background:var(--red);color:#fff}
+    @keyframes tin{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+    @keyframes tout{from{opacity:1}to{opacity:0}}
+    .dhero{background:var(--bg1);border:1px solid var(--adim);border-radius:var(--r);padding:16px;margin-bottom:12px;text-align:center}
+    .dhn{font-family:var(--sans);font-size:17px;font-weight:600;color:var(--t);margin-bottom:4px}
+    .dhd{font-family:var(--mono);font-size:11px;color:var(--t3)}
+    .tagrow{display:flex;gap:6px;flex-wrap:wrap}
+    .tag{display:inline-flex;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:4px 8px;font-family:var(--mono);font-size:10px;color:var(--t2);gap:4px}
+    .tag.on{border-color:var(--amber);color:var(--amber);background:var(--aglow)}
+    .tagx{font-size:13px;color:var(--t3);background:none;border:none;cursor:pointer;padding:0;line-height:1}
+    .taginrow{display:flex;gap:8px;margin-top:8px}
+    .taginrow input{flex:1}
+    .rc{background:var(--bg1);border:1px solid var(--adim);border-radius:var(--r);padding:14px;margin-bottom:10px}
+    .rt{font-family:var(--sans);font-size:15px;font-weight:600;color:var(--t);margin-bottom:10px}
+    .rr{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--border)}
+    .rr:last-child{border-bottom:none}
+    .rk{font-family:var(--mono);font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em}
+    .rv{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--t)}
+    .rv.a{color:var(--amber)}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .notebox{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;font-family:var(--sans);font-size:12px;color:var(--t);line-height:1.5}
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const SUPABASE_URL = "https://qftewpsykvtxndmdsprr.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmdGV3cHN5a3Z0eG5kbWRzcHJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNjQ3MTYsImV4cCI6MjA5NDY0MDcxNn0.NswD6NHaxkHtllUwNCZGhvb7t_M2RAO5oHZht5iOVws";
+    const H = {"apikey":SUPABASE_KEY,"Authorization":`Bearer ${SUPABASE_KEY}`,"Content-Type":"application/json","Prefer":"return=representation"};
+
+    const toRow = e => ({name:e.name,date:e.date,client:e.client,venue:e.venue,start_time:e.startTime,end_time:e.endTime,peak_start:e.peakStart,peak_end:e.peakEnd,guests:e.guests,cups:e.cups,dairy_milk:e.dairyMilk,oat_milk:e.oatMilk,almond_milk:e.almondMilk,other_milk:e.otherMilk,staff_count:e.staffCount,staff_names:e.staffNames,satisfaction:e.satisfaction,notes:e.notes,highlights:e.highlights,improvements:e.improvements});
+    const fromRow = r => !r?null:({id:r.id,createdAt:r.created_at,name:r.name,date:r.date,client:r.client||"",venue:r.venue||"",startTime:r.start_time||"",endTime:r.end_time||"",peakStart:r.peak_start||"",peakEnd:r.peak_end||"",guests:r.guests||0,cups:r.cups||0,dairyMilk:parseFloat(r.dairy_milk)||0,oatMilk:r.oat_milk||0,almondMilk:r.almond_milk||0,otherMilk:r.other_milk||0,staffCount:r.staff_count||0,staffNames:r.staff_names||[],satisfaction:r.satisfaction||3,notes:r.notes||"",highlights:r.highlights||[],improvements:r.improvements||[]});
+    const sb = {
+      async getAll(){const r=await fetch(`${SUPABASE_URL}/rest/v1/events?select=*&order=created_at.desc`,{headers:H});if(!r.ok)throw new Error();return r.json();},
+      async insert(ev){const r=await fetch(`${SUPABASE_URL}/rest/v1/events`,{method:"POST",headers:H,body:JSON.stringify(toRow(ev))});if(!r.ok)throw new Error();const d=await r.json();return fromRow(d[0]);},
+      async update(id,ev){const r=await fetch(`${SUPABASE_URL}/rest/v1/events?id=eq.${id}`,{method:"PATCH",headers:H,body:JSON.stringify(toRow(ev))});if(!r.ok)throw new Error();const d=await r.json();return fromRow(d[0]);},
+      async del(id){const r=await fetch(`${SUPABASE_URL}/rest/v1/events?id=eq.${id}`,{method:"DELETE",headers:H});if(!r.ok)throw new Error();}
+    };
+
+    const dur=(s,e)=>{if(!s||!e)return null;const[sh,sm]=s.split(":").map(Number),[eh,em]=e.split(":").map(Number),t=(eh*60+em)-(sh*60+sm);if(t<=0)return null;return Math.floor(t/60)>0?`${Math.floor(t/60)}h ${t%60}m`:`${t%60}m`;};
+    const durMins=(s,e)=>{if(!s||!e)return 0;const[sh,sm]=s.split(":").map(Number),[eh,em]=e.split(":").map(Number);return Math.max(0,(eh*60+em)-(sh*60+sm));};
+    const SAT_LBL=["","Poor","Fair","OK","Good","Excellent"];
+    const SAT_EMO=["","😞","😐","🙂","😊","⭐"];
+    const ROLES=["Barista","Lead Barista","Runner","Setup","Manager"];
+    const blank=()=>({id:null,name:"",date:new Date().toISOString().slice(0,10),venue:"",client:"",startTime:"",endTime:"",peakStart:"",peakEnd:"",guests:0,cups:0,dairyMilk:0,oatMilk:0,almondMilk:0,otherMilk:0,staffCount:0,staffNames:[],satisfaction:3,notes:"",highlights:[],improvements:[]});
+    const monthKey=ev=>ev.date?ev.date.slice(0,7):"Unknown";
+    const monthLbl=k=>{if(k==="Unknown")return"Unknown";const[y,m]=k.split("-");return new Date(y,m-1).toLocaleString("en-AU",{month:"long",year:"numeric"});};
+
+    function Ctr({val,set,unit,min=0}){return(<div className="ctr"><button className="cb" onClick={()=>set(Math.max(min,val-1))}>−</button><div className="cv">{val}</div><div className="cu">{unit}</div><button className="cb" onClick={()=>set(val+1)}>+</button></div>);}
+    function Stp({val,set,unit,step=0.5,min=0}){const d=Number.isInteger(val)?`${val}.0`:val.toFixed(1);return(<div className="stp"><button className="stpb" onClick={()=>set(Math.max(min,parseFloat((val-step).toFixed(1))))}>−</button><div className="stpd"><span className="stpv">{d}</span><span className="stpu">{unit}</span></div><button className="stpb" onClick={()=>set(parseFloat((val+step).toFixed(1)))}>+</button></div>);}
+    function IBar({lbl,val,max,unit,col=""}){const p=max>0?Math.round(val/max*100):0;return(<div className="ibw"><div className="ibh"><span className="ibl">{lbl}</span><span className="ibv">{val} {unit}</span></div><div className="ibt"><div className={`ibf ${col}`} style={{width:`${p}%`}}/></div></div>);}
+
+    function App() {
+      const [tab,setTab]=useState("dashboard");
+      const [events,setEvents]=useState([]);
+      const [cur,setCur]=useState(blank());
+      const [toast,setToast]=useState(null);
+      const [sync,setSync]=useState("ok");
+      const [viewEv,setViewEv]=useState(null);
+      const [loading,setLoading]=useState(true);
+      const [saving,setSaving]=useState(false);
+      const [hiInput,setHiInput]=useState("");
+      const [impInput,setImpInput]=useState("");
+
+      const toast$=(msg,type="s")=>{setToast({msg,type});setTimeout(()=>setToast(null),2100);};
+
+      useEffect(()=>{
+        (async()=>{
+          try{setSync("busy");const rows=await sb.getAll();setEvents(rows.map(fromRow));setSync("ok");}
+          catch{setSync("err");toast$("Could not reach database","e");}
+          finally{setLoading(false);}
+        })();
+      },[]);
+
+      const save=async()=>{
+        if(!cur.name.trim()){toast$("Event name required","e");return;}
+        setSaving(true);setSync("busy");
+        try{
+          if(cur.id){const u=await sb.update(cur.id,cur);setEvents(p=>p.map(e=>e.id===cur.id?u:e));}
+          else{const c=await sb.insert(cur);setEvents(p=>[c,...p]);}
+          setCur(blank());setSync("ok");toast$("Saved ✓");setTab("events");
+        }catch{setSync("err");toast$("Save failed","e");}
+        finally{setSaving(false);}
+      };
+
+      const del=async id=>{
+        setSync("busy");
+        try{await sb.del(id);setEvents(p=>p.filter(e=>e.id!==id));setViewEv(null);setSync("ok");toast$("Deleted");}
+        catch{setSync("err");toast$("Delete failed","e");}
+      };
+
+      const edit=ev=>{setCur({...ev});setViewEv(null);setTab("dashboard");};
+      const TC=events.reduce((s,e)=>s+e.cups,0),TG=events.reduce((s,e)=>s+e.guests,0);
+      const TD=events.reduce((s,e)=>s+e.dairyMilk,0),TO=events.reduce((s,e)=>s+e.oatMilk,0);
+      const TA=events.reduce((s,e)=>s+e.almondMilk,0),TOt=events.reduce((s,e)=>s+e.otherMilk,0);
+      const avgSat=events.length?(events.reduce((s,e)=>s+e.satisfaction,0)/events.length).toFixed(1):"—";
+      const wg=events.filter(e=>e.guests>0);
+      const avgCPG=wg.length?(wg.reduce((s,e)=>s+e.cups/e.guests,0)/wg.length).toFixed(2):"—";
+
+      return(
+        <div className="app">
+          <header className="hdr">
+            <div className="logo">CDE</div>
+            <div className="hdrtitle"><span>Event</span> Intel</div>
+            <div className={`sdot ${sync}`}/>
+            <div className="badge">LIVE DB</div>
+          </header>
+          <div className="scroll">
+            {tab==="dashboard"&&<DashTab cur={cur} setCur={setCur} save={save} saving={saving}/>}
+            {tab==="debrief"&&<DebriefTab cur={cur} setCur={setCur} save={save} saving={saving} hi={hiInput} setHi={setHiInput} imp={impInput} setImp={setImpInput}/>}
+            {tab==="events"&&<EventsTab events={events} loading={loading} viewEv={viewEv} setViewEv={setViewEv} edit={edit} del={del} newEv={()=>{setCur(blank());setTab("dashboard");}}/>}
+            {tab==="insights"&&<InsightsTab events={events} loading={loading} TC={TC} TG={TG} TD={TD} TO={TO} TA={TA} TOt={TOt} avgSat={avgSat} avgCPG={avgCPG}/>}
+          </div>
+          <nav className="tabs">
+            {[{id:"dashboard",icon:"⬛",lbl:"Log"},{id:"debrief",icon:"📋",lbl:"Debrief"},{id:"events",icon:"📁",lbl:"Events"},{id:"insights",icon:"📊",lbl:"Reports"}].map(t=>(
+              <button key={t.id} className={`tb ${tab===t.id?"on":""}`} onClick={()=>setTab(t.id)}>
+                <span className="tbi">{t.icon}</span>{t.lbl}
+              </button>
+            ))}
+          </nav>
+          {toast&&<div className={`toast ${toast.type}`}>{toast.msg}</div>}
+        </div>
+      );
+    }
+
+    function DashTab({cur,setCur,save,saving}){
+      const u=(k,v)=>setCur(p=>({...p,[k]:v}));
+      const d=dur(cur.startTime,cur.endTime),pd=dur(cur.peakStart,cur.peakEnd);
+      const mins=durMins(cur.startTime,cur.endTime);
+      const cph=mins&&cur.cups?(cur.cups/(mins/60)).toFixed(1):null;
+      const tog=r=>u("staffNames",cur.staffNames.includes(r)?cur.staffNames.filter(x=>x!==r):[...cur.staffNames,r]);
+      return(
+        <div style={{paddingBottom:16}}>
+          {cur.id&&<div style={{margin:"10px 14px 0",padding:"8px 12px",background:"var(--aglow)",border:"1px solid var(--adim)",borderRadius:"var(--r)",fontFamily:"var(--mono)",fontSize:10,color:"var(--amber)"}}>✏️ Editing saved event</div>}
+          <div className="sec"><div className="slbl">Event Info</div>
+            <div className="card">
+              <div className="fld"><label className="flbl">Event Name *</label><input type="text" value={cur.name} onChange={e=>u("name",e.target.value)} placeholder="e.g. ACME Corp AGM"/></div>
+              <div className="two">
+                <div className="fld"><label className="flbl">Date</label><input type="date" value={cur.date} onChange={e=>u("date",e.target.value)}/></div>
+                <div className="fld"><label className="flbl">Client</label><input type="text" value={cur.client} onChange={e=>u("client",e.target.value)} placeholder="Client"/></div>
+              </div>
+              <div className="fld" style={{marginBottom:0}}><label className="flbl">Venue</label><input type="text" value={cur.venue} onChange={e=>u("venue",e.target.value)} placeholder="Venue / location"/></div>
+            </div>
+          </div>
+          <div className="sec"><div className="slbl">Timing</div>
+            <div className="card">
+              {d&&<div className="db"><span className="dbl">Duration</span><span className="dbv">{d}</span></div>}
+              <div className="fld">
+                <label className="flbl">Service Window</label>
+                <div className="tr"><input type="time" value={cur.startTime} onChange={e=>u("startTime",e.target.value)}/><input type="time" value={cur.endTime} onChange={e=>u("endTime",e.target.value)}/></div>
+                <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}><span style={{fontFamily:"var(--mono)",fontSize:9,color:"var(--t3)"}}>START</span><span style={{fontFamily:"var(--mono)",fontSize:9,color:"var(--t3)"}}>END</span></div>
+              </div>
+              <div className="fld" style={{marginBottom:0}}>
+                <label className="flbl">Peak Window {pd&&<span className="fsub">({pd})</span>}</label>
+                <div className="tr"><input type="time" value={cur.peakStart} onChange={e=>u("peakStart",e.target.value)}/><input type="time" value={cur.peakEnd} onChange={e=>u("peakEnd",e.target.value)}/></div>
+              </div>
+            </div>
+          </div>
+          <div className="sec"><div className="slbl">Guests</div>
+            <div className="card"><div className="fld" style={{marginBottom:0}}><label className="flbl">Guest Count</label><Ctr val={cur.guests} set={v=>u("guests",v)} unit="pax"/></div></div>
+          </div>
+          <div className="sec"><div className="slbl">Drinks</div>
+            <div className="card">
+              <div className="fld"><label className="flbl">Cups <span className="fsub">total drinks</span></label><Ctr val={cur.cups} set={v=>u("cups",v)} unit="cups"/></div>
+              {cph&&<div style={{marginBottom:14,padding:"8px 12px",background:"var(--bg3)",borderRadius:"var(--r)",fontFamily:"var(--mono)",fontSize:11,color:"var(--t2)"}}>≈ <strong style={{color:"var(--amber)"}}>{cph}</strong> cups/hr</div>}
+              {cur.guests>0&&cur.cups>0&&<div style={{padding:"8px 12px",background:"var(--bg3)",borderRadius:"var(--r)",fontFamily:"var(--mono)",fontSize:11,color:"var(--t2)"}}>≈ <strong style={{color:"var(--blue)"}}>{(cur.cups/cur.guests).toFixed(2)}</strong> cups/guest</div>}
+            </div>
+          </div>
+          <div className="sec"><div className="slbl">Milk</div>
+            <div className="card">
+              <div className="fld"><label className="flbl">Dairy <span className="fsub">litres</span></label><Stp val={cur.dairyMilk} set={v=>u("dairyMilk",v)} unit="L" step={0.5}/></div>
+              <div className="fld"><label className="flbl">Oat Milk <span className="fsub">1L cartons</span></label><Ctr val={cur.oatMilk} set={v=>u("oatMilk",v)} unit="cartons"/></div>
+              <div className="fld"><label className="flbl">Almond Milk <span className="fsub">1L cartons</span></label><Ctr val={cur.almondMilk} set={v=>u("almondMilk",v)} unit="cartons"/></div>
+              <div className="fld" style={{marginBottom:0}}><label className="flbl">Other Alt Milk <span className="fsub">1L cartons</span></label><Ctr val={cur.otherMilk} set={v=>u("otherMilk",v)} unit="cartons"/></div>
+            </div>
+          </div>
+          <div className="sec"><div className="slbl">Staffing</div>
+            <div className="card">
+              <div className="fld"><label className="flbl">Total Staff</label><Ctr val={cur.staffCount} set={v=>u("staffCount",v)} unit="staff"/></div>
+              <div className="fld" style={{marginBottom:0}}><label className="flbl">Roles Present</label>
+                <div className="strow">{ROLES.map(r=><div key={r} className={`pill ${cur.staffNames.includes(r)?"on":""}`} onClick={()=>tog(r)}><span>{r}</span></div>)}</div>
+              </div>
+            </div>
+          </div>
+          <div className="sec"><div className="slbl">Satisfaction</div>
+            <div className="card">
+              <div className="slv">{cur.satisfaction} {SAT_EMO[cur.satisfaction]}</div>
+              <div className="sld">{SAT_LBL[cur.satisfaction]}</div>
+              <input type="range" min={1} max={5} step={1} value={cur.satisfaction} onChange={e=>u("satisfaction",Number(e.target.value))} style={{background:`linear-gradient(to right,var(--amber) 0%,var(--amber) ${(cur.satisfaction-1)*25}%,var(--bg3) ${(cur.satisfaction-1)*25}%)`}}/>
+              <div className="sll">{[1,2,3,4,5].map(n=><div key={n} className={`slln ${cur.satisfaction===n?"on":""}`}>{n}</div>)}</div>
+            </div>
+          </div>
+          <div className="sec" style={{paddingBottom:0}}>
+            <button className="btn btnp btnw" onClick={save} disabled={saving}>{saving?"Saving…":cur.id?"Update Event ↗":"Save Event ↗"}</button>
+            {cur.id&&<button className="btn btng btnw" style={{marginTop:8}} onClick={()=>setCur(blank())}>+ New Event</button>}
+          </div>
+        </div>
+      );
+    }
+
+    function DebriefTab({cur,setCur,save,saving,hi,setHi,imp,setImp}){
+      const u=(k,v)=>setCur(p=>({...p,[k]:v}));
+      const d=dur(cur.startTime,cur.endTime);
+      const tm=cur.dairyMilk+cur.oatMilk+cur.almondMilk+cur.otherMilk;
+      const addHi=()=>{if(!hi.trim())return;u("highlights",[...(cur.highlights||[]),hi.trim()]);setHi("");};
+      const addIm=()=>{if(!imp.trim())return;u("improvements",[...(cur.improvements||[]),imp.trim()]);setImp("");};
+      if(!cur.name)return<div className="empty"><div className="eic">📋</div><div className="etx">Fill in the Log tab first,<br/>then debrief here.</div></div>;
+      return(
+        <div style={{padding:"12px 14px"}}>
+          <div className="dhero"><div className="dhn">{cur.name}</div><div className="dhd">{cur.date}{cur.venue?` · ${cur.venue}`:""}</div></div>
+          <div className="sg" style={{marginBottom:10}}>
+            <div className="sb2 hi"><div className="sl">Cups</div><div className="sv2 a">{cur.cups}</div></div>
+            <div className="sb2 hi"><div className="sl">Guests</div><div className="sv2 a">{cur.guests}</div></div>
+            <div className="sb2"><div className="sl">Duration</div><div className="sv2" style={{fontSize:15}}>{d||"—"}</div></div>
+            <div className="sb2"><div className="sl">Satisfaction</div><div className="sv2">{cur.satisfaction}<span className="su2">/5</span></div></div>
+            <div className="sb2"><div className="sl">Milk Units</div><div className="sv2" style={{fontSize:15}}>{tm}</div></div>
+            <div className="sb2"><div className="sl">Staff</div><div className="sv2">{cur.staffCount}</div></div>
+          </div>
+          {tm>0&&<><div className="slbl" style={{margin:"12px 0 8px"}}>Milk Breakdown</div>
+            <div className="card" style={{marginBottom:10}}>
+              {cur.dairyMilk>0&&<IBar lbl="Dairy" val={cur.dairyMilk} max={tm} unit="L"/>}
+              {cur.oatMilk>0&&<IBar lbl="Oat" val={cur.oatMilk} max={tm} unit="cartons" col="g"/>}
+              {cur.almondMilk>0&&<IBar lbl="Almond" val={cur.almondMilk} max={tm} unit="cartons" col="b"/>}
+              {cur.otherMilk>0&&<IBar lbl="Other" val={cur.otherMilk} max={tm} unit="cartons" col="b"/>}
+            </div></>}
+          <div className="slbl" style={{margin:"12px 0 8px"}}>What Went Well ✓</div>
+          <div className="card" style={{marginBottom:10}}>
+            <div className="tagrow" style={{marginBottom:(cur.highlights||[]).length?8:0}}>
+              {(cur.highlights||[]).map((h,i)=><div key={i} className="tag on">{h}<button className="tagx" onClick={()=>u("highlights",cur.highlights.filter((_,j)=>j!==i))}>×</button></div>)}
+            </div>
+            <div className="taginrow"><input type="text" value={hi} onChange={e=>setHi(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addHi()} placeholder="Add highlight…" style={{fontSize:12}}/><button className="btn btng" style={{padding:"0 14px",fontSize:18}} onClick={addHi}>+</button></div>
+          </div>
+          <div className="slbl" style={{margin:"12px 0 8px"}}>Improvements ↗</div>
+          <div className="card" style={{marginBottom:10}}>
+            <div className="tagrow" style={{marginBottom:(cur.improvements||[]).length?8:0}}>
+              {(cur.improvements||[]).map((h,i)=><div key={i} className="tag">{h}<button className="tagx" onClick={()=>u("improvements",cur.improvements.filter((_,j)=>j!==i))}>×</button></div>)}
+            </div>
+            <div className="taginrow"><input type="text" value={imp} onChange={e=>setImp(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addIm()} placeholder="Add improvement…" style={{fontSize:12}}/><button className="btn btng" style={{padding:"0 14px",fontSize:18}} onClick={addIm}>+</button></div>
+          </div>
+          <div className="slbl" style={{margin:"12px 0 8px"}}>Notes</div>
+          <textarea value={cur.notes} onChange={e=>setCur(p=>({...p,notes:e.target.value}))} placeholder="Free-form notes, observations, client feedback…" style={{width:"100%",marginBottom:12}}/>
+          <button className="btn btnp btnw" onClick={save} disabled={saving} style={{marginBottom:16}}>{saving?"Saving…":"Save Debrief ↗"}</button>
+        </div>
+      );
+    }
+
+    function EventsTab({events,loading,viewEv,setViewEv,edit,del,newEv}){
+      if(viewEv){
+        const ev=viewEv,d=dur(ev.startTime,ev.endTime),pd=dur(ev.peakStart,ev.peakEnd);
+        const tm=ev.dairyMilk+ev.oatMilk+ev.almondMilk+ev.otherMilk;
+        return(
+          <div style={{padding:"12px 14px 24px"}}>
+            <button className="btn btng" style={{marginBottom:12,padding:"8px 14px"}} onClick={()=>setViewEv(null)}>← Back</button>
+            <div className="dhero"><div className="dhn">{ev.name}</div><div className="dhd">{ev.date}{ev.client?` · ${ev.client}`:""}{ev.venue?` · ${ev.venue}`:""}</div></div>
+            <div className="sg" style={{marginBottom:10}}>
+              <div className="sb2 hi"><div className="sl">Cups</div><div className="sv2 a">{ev.cups}</div></div>
+              <div className="sb2 hi"><div className="sl">Guests</div><div className="sv2 a">{ev.guests}</div></div>
+              <div className="sb2"><div className="sl">Duration</div><div className="sv2" style={{fontSize:15}}>{d||"—"}</div></div>
+              <div className="sb2"><div className="sl">Satisfaction</div><div className="sv2">{ev.satisfaction}<span className="su2">/5</span></div></div>
+              <div className="sb2"><div className="sl">Staff</div><div className="sv2">{ev.staffCount}</div></div>
+              <div className="sb2"><div className="sl">Milk Units</div><div className="sv2" style={{fontSize:15}}>{tm}</div></div>
+            </div>
+            {(ev.startTime||ev.peakStart)&&<><div className="slbl" style={{margin:"12px 0 8px"}}>Timing</div>
+              <div className="card" style={{marginBottom:10}}>
+                {ev.startTime&&<div style={{display:"flex",justifyContent:"space-between",marginBottom:ev.peakStart?6:0}}><span style={{fontFamily:"var(--mono)",fontSize:11,color:"var(--t3)"}}>Service</span><span style={{fontFamily:"var(--mono)",fontSize:11,color:"var(--t)"}}>{ev.startTime}–{ev.endTime} {d&&`(${d})`}</span></div>}
+                {ev.peakStart&&<div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontFamily:"var(--mono)",fontSize:11,color:"var(--t3)"}}>Peak</span><span style={{fontFamily:"var(--mono)",fontSize:11,color:"var(--amber)"}}>{ev.peakStart}–{ev.peakEnd} {pd&&`(${pd})`}</span></div>}
+              </div></>}
+            {tm>0&&<><div className="slbl" style={{margin:"12px 0 8px"}}>Milk</div>
+              <div className="card" style={{marginBottom:10}}>
+                {ev.dairyMilk>0&&<IBar lbl="Dairy" val={ev.dairyMilk} max={tm} unit="L"/>}
+                {ev.oatMilk>0&&<IBar lbl="Oat" val={ev.oatMilk} max={tm} unit="cartons" col="g"/>}
+                {ev.almondMilk>0&&<IBar lbl="Almond" val={ev.almondMilk} max={tm} unit="cartons" col="b"/>}
+                {ev.otherMilk>0&&<IBar lbl="Other" val={ev.otherMilk} max={tm} unit="cartons" col="b"/>}
+              </div></>}
+            {ev.staffNames?.length>0&&<><div className="slbl" style={{margin:"12px 0 8px"}}>Roles</div><div className="tagrow" style={{marginBottom:10}}>{ev.staffNames.map(r=><div key={r} className="tag on">{r}</div>)}</div></>}
+            {ev.highlights?.length>0&&<><div className="slbl" style={{margin:"12px 0 8px"}}>What Went Well</div><div className="tagrow" style={{marginBottom:10}}>{ev.highlights.map((h,i)=><div key={i} className="tag on">{h}</div>)}</div></>}
+            {ev.improvements?.length>0&&<><div className="slbl" style={{margin:"12px 0 8px"}}>Improvements</div><div className="tagrow" style={{marginBottom:10}}>{ev.improvements.map((h,i)=><div key={i} className="tag">{h}</div>)}</div></>}
+            {ev.notes&&<><div className="slbl" style={{margin:"12px 0 8px"}}>Notes</div><div className="notebox" style={{marginBottom:10}}>{ev.notes}</div></>}
+            <div style={{display:"flex",gap:8,marginTop:16}}>
+              <button className="btn btng" style={{flex:1}} onClick={()=>edit(ev)}>✏️ Edit</button>
+              <button className="btn btnd" style={{flex:1}} onClick={()=>del(ev.id)}>Delete</button>
+            </div>
+          </div>
+        );
+      }
+      return(
+        <div style={{padding:"12px 14px 16px"}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+            <div className="slbl" style={{margin:0}}>Events <span style={{color:"var(--amber)",marginLeft:6}}>{events.length}</span></div>
+            <button className="btn btnp" style={{padding:"7px 14px",fontSize:10}} onClick={newEv}>+ New</button>
+          </div>
+          {loading?<div className="lscr"><div className="spin"/><div className="ltx">Loading from database…</div></div>
+          :events.length===0?<div className="empty"><div className="eic">📁</div><div className="etx">No events yet.<br/>Tap Log to add your first event.</div></div>
+          :events.map(ev=>(
+            <div key={ev.id} className="ei" onClick={()=>setViewEv(ev)}>
+              <div className="eih"><div className="ein">{ev.name}</div><div className="eis">{ev.satisfaction}/5 {SAT_EMO[ev.satisfaction]}</div></div>
+              <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+                <span className="mc"><strong>{ev.date}</strong></span>
+                {ev.client&&<span className="mc">{ev.client}</span>}
+                <span className="mc"><strong>{ev.cups}</strong> cups</span>
+                <span className="mc"><strong>{ev.guests}</strong> guests</span>
+                {ev.staffCount>0&&<span className="mc"><strong>{ev.staffCount}</strong> staff</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    function InsightsTab({events,loading,TC,TG,TD,TO,TA,TOt,avgSat,avgCPG}){
+      const [selM,setSelM]=useState("");
+      if(loading)return<div className="lscr"><div className="spin"/><div className="ltx">Loading…</div></div>;
+      if(events.length===0)return<div className="empty" style={{paddingTop:60}}><div className="eic">📊</div><div className="etx">No events yet.</div></div>;
+      const TM=TD+TO+TA+TOt;
+      const avgCups=Math.round(TC/events.length),avgG=Math.round(TG/events.length);
+      const avgSt=(events.reduce((s,e)=>s+e.staffCount,0)/events.length).toFixed(1);
+      const best=events.reduce((b,e)=>(!b||e.satisfaction>b.satisfaction)?e:b,null);
+      const busy=events.reduce((b,e)=>(!b||e.cups>b.cups)?e:b,null);
+      const satD=[1,2,3,4,5].map(n=>({n,count:events.filter(e=>e.satisfaction===n).length}));
+      const grouped={};
+      events.forEach(ev=>{const k=monthKey(ev);if(!grouped[k])grouped[k]=[];grouped[k].push(ev);});
+      const months=Object.keys(grouped).sort().reverse();
+      const sm=selM||months[0]||"";
+      const mEvs=grouped[sm]||[];
+      const mC=mEvs.reduce((s,e)=>s+e.cups,0),mG=mEvs.reduce((s,e)=>s+e.guests,0);
+      const mD=mEvs.reduce((s,e)=>s+e.dairyMilk,0),mO=mEvs.reduce((s,e)=>s+e.oatMilk,0);
+      const mA=mEvs.reduce((s,e)=>s+e.almondMilk,0),mOt=mEvs.reduce((s,e)=>s+e.otherMilk,0);
+      const mSat=mEvs.length?(mEvs.reduce((s,e)=>s+e.satisfaction,0)/mEvs.length).toFixed(1):"—";
+      const mSt=mEvs.length?(mEvs.reduce((s,e)=>s+e.staffCount,0)/mEvs.length).toFixed(1):"—";
+      const mMins=mEvs.reduce((s,e)=>s+durMins(e.startTime,e.endTime),0);
+      const mHrs=mMins>0?`${Math.floor(mMins/60)}h ${mMins%60}m`:"—";
+      return(
+        <div style={{padding:"12px 14px 24px"}}>
+          <div className="slbl" style={{marginBottom:10}}>Monthly Report</div>
+          <div style={{marginBottom:10}}><select value={sm} onChange={e=>setSelM(e.target.value)}>{months.map(m=><option key={m} value={m}>{monthLbl(m)}</option>)}</select></div>
+          {sm&&<div className="rc" style={{marginBottom:16}}>
+            <div className="rt">📅 {monthLbl(sm)}</div>
+            <div className="rr"><span className="rk">Events</span><span className="rv a">{mEvs.length}</span></div>
+            <div className="rr"><span className="rk">Total Cups</span><span className="rv a">{mC}</span></div>
+            <div className="rr"><span className="rk">Total Guests</span><span className="rv">{mG}</span></div>
+            <div className="rr"><span className="rk">Cups / Guest</span><span className="rv">{mG>0?(mC/mG).toFixed(2):"—"}</span></div>
+            <div className="rr"><span className="rk">Avg Satisfaction</span><span className="rv">{mSat}/5</span></div>
+            <div className="rr"><span className="rk">Avg Staff</span><span className="rv">{mSt}</span></div>
+            <div className="rr"><span className="rk">Total Service Time</span><span className="rv">{mHrs}</span></div>
+            <div className="rr"><span className="rk">Dairy Milk</span><span className="rv">{mD}L</span></div>
+            <div className="rr"><span className="rk">Oat Milk</span><span className="rv">{mO} cartons</span></div>
+            <div className="rr"><span className="rk">Almond Milk</span><span className="rv">{mA} cartons</span></div>
+            {mOt>0&&<div className="rr"><span className="rk">Other Alt Milk</span><span className="rv">{mOt} cartons</span></div>}
+          </div>}
+          <div className="slbl" style={{marginBottom:8}}>All-Time Totals</div>
+          <div className="sg" style={{marginBottom:10}}>
+            <div className="sb2 hi"><div className="sl">Total Cups</div><div className="sv2 a">{TC}</div></div>
+            <div className="sb2 hi"><div className="sl">Total Guests</div><div className="sv2 a">{TG}</div></div>
+            <div className="sb2"><div className="sl">Events</div><div className="sv2">{events.length}</div></div>
+            <div className="sb2"><div className="sl">Avg Sat.</div><div className="sv2">{avgSat}<span className="su2">/5</span></div></div>
+          </div>
+          <div className="slbl" style={{margin:"12px 0 8px"}}>Per-Event Averages</div>
+          <div className="sg3" style={{marginBottom:10}}>
+            <div className="sb2"><div className="sl">Cups</div><div className="sv2" style={{fontSize:18}}>{avgCups}</div></div>
+            <div className="sb2"><div className="sl">Guests</div><div className="sv2" style={{fontSize:18}}>{avgG}</div></div>
+            <div className="sb2"><div className="sl">Staff</div><div className="sv2" style={{fontSize:18}}>{avgSt}</div></div>
+          </div>
+          {avgCPG!=="—"&&<div className="sb2" style={{marginBottom:10,background:"var(--bg1)",border:"1px solid var(--border)",borderRadius:"var(--r)",padding:12}}><div className="sl">Avg Cups / Guest</div><div className="sv2 a" style={{fontSize:28}}>{avgCPG}</div></div>}
+          <div className="slbl" style={{margin:"12px 0 8px"}}>Satisfaction Spread</div>
+          <div className="card" style={{marginBottom:10}}>{satD.map(({n,count})=><IBar key={n} lbl={`${n} ${SAT_EMO[n]}`} val={count} max={events.length} unit="events" col={n>=4?"g":n===3?"":"b"}/>)}</div>
+          {TM>0&&<><div className="slbl" style={{margin:"12px 0 8px"}}>All-Time Milk</div>
+            <div className="card" style={{marginBottom:10}}>
+              {TD>0&&<IBar lbl="Dairy" val={TD} max={TM} unit="L"/>}
+              {TO>0&&<IBar lbl="Oat" val={TO} max={TM} unit="cartons" col="g"/>}
+              {TA>0&&<IBar lbl="Almond" val={TA} max={TM} unit="cartons" col="b"/>}
+              {TOt>0&&<IBar lbl="Other" val={TOt} max={TM} unit="cartons" col="b"/>}
+            </div></>}
+          <div className="slbl" style={{margin:"12px 0 8px"}}>Standouts</div>
+          {best&&<div className="card" style={{marginBottom:8}}><div className="sl" style={{marginBottom:6}}>⭐ Highest Rated</div><div style={{fontFamily:"var(--sans)",fontSize:14,fontWeight:600,color:"var(--t)",marginBottom:2}}>{best.name}</div><div style={{fontFamily:"var(--mono)",fontSize:11,color:"var(--t3)"}}>{best.date} · {best.satisfaction}/5 · {best.cups} cups</div></div>}
+          {busy&&<div className="card"><div className="sl" style={{marginBottom:6}}>☕ Busiest Event</div><div style={{fontFamily:"var(--sans)",fontSize:14,fontWeight:600,color:"var(--t)",marginBottom:2}}>{busy.name}</div><div style={{fontFamily:"var(--mono)",fontSize:11,color:"var(--t3)"}}>{busy.date} · {busy.cups} cups · {busy.guests} guests</div></div>}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App/>);
+  </script>
+</body>
 </html>
